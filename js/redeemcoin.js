@@ -185,8 +185,17 @@ function showOopsPopup() {
 
   /* Skip handler */
   skipBtn.addEventListener("click", function () {
-    if (pendingGameUrl) window.location.href = pendingGameUrl;
+    const userCoins = parseInt(safeGetItem("coins")) || 0;
+    if (userCoins >= 10) {
+      const updatedCoins = userCoins - 10;
+      safeSetItem("coins", updatedCoins);
+      const coinEl = document.getElementById("coin");
+      if (coinEl) coinEl.textContent = updatedCoins;
+    }
     closeOopsPopup();
+    if (pendingGameUrl) {
+      setTimeout(() => window.location.href = pendingGameUrl, 300);
+    }
   });
 
   /* Claim handler → RewardAd with callbacks */
@@ -205,10 +214,8 @@ function showOopsPopup() {
       const originalRewardAd = window.RewardAd;
       window.onAdSuccess = () => {
         addCoins(100);
+        showRewardModal();
         closeOopsPopup();
-        if (pendingGameUrl) {
-          window.location.href = pendingGameUrl;
-        }
       };
       window.onAdFail = () => {
         // Reset popup
