@@ -155,7 +155,7 @@ function showOopsPopup() {
   const popupHTML = `
     <div id="oopsPopup" class="popup" style="display:flex" data-clarity-mask="true">
       <div class="popup-data">
-        <img class="oops-img" src="https://gameplay.pomanderplace.com/assets/icons/coin-earn.png" alt="Oops!" />
+        <img class="oops-img"  src="https://gameplay.pomanderplace.com/assets/icons/coin-earn.png" style="width:100px;height:50px;filter:drop-shadow(0 2px 4px rgba(255,215,0,0.4));" alt="Oops!" />
         <p class="main-text">You don't have enough coins to join this contest.</p>
         <p class="sub-text">Watch reward ad to earn coins</p>
         <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;">
@@ -198,42 +198,24 @@ function showOopsPopup() {
     }
   });
 
-  /* Claim handler → RewardAd with callbacks */
+  /* Claim handler → Direct reward (no ad) */
   claimBtn.addEventListener("click", function () {
-    // Show loading state, don't close yet
-    claimBtn.textContent = 'Watching ad... ⏳';
+    // Show brief loading
+    claimBtn.textContent = 'Claiming reward... ✨';
     claimBtn.disabled = true;
     closeBtn.disabled = true;
     skipBtn.disabled = true;
     closeBtn.style.opacity = '0.5';
     skipBtn.style.opacity = '0.5';
 
-    // Call RewardAd with success/fail callbacks
-    if (typeof RewardAd === 'function') {
-      // Temporarily override RewardAd to handle callbacks (since it's external)
-      const originalRewardAd = window.RewardAd;
-      window.onAdSuccess = () => {
-        addCoins(100);
-        showRewardModal();
-        closeOopsPopup();
-      };
-      window.onAdFail = () => {
-        // Reset popup
-        claimBtn.textContent = 'Claim';
-        claimBtn.disabled = false;
-        closeBtn.disabled = false;
-        skipBtn.disabled = false;
-        closeBtn.style.opacity = '1';
-        skipBtn.style.opacity = '1';
-        showToastError('Ad failed, try again');
-      };
-      RewardAd();
-    } else {
-      showToastError('RewardAd not ready');
-      claimBtn.textContent = 'Claim';
-      claimBtn.disabled = false;
-    }
+    // Direct success: no ad
+    setTimeout(() => {
+      addCoins(100);
+      showRewardModal();
+      closeOopsPopup();
+    }, 800); // Brief delay for UX
   });
+
 }
 
 function closeOopsPopup() {
