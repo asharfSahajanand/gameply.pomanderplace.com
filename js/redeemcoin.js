@@ -155,7 +155,7 @@ function showOopsPopup() {
   const popupHTML = `
     <div id="oopsPopup" class="popup" style="display:flex" data-clarity-mask="true">
       <div class="popup-data">
-        <img class="oops-img" src="/assets/icons/oops.png" alt="Oops!" />
+        <img class="oops-img" src="https://gameplay.pomanderplace.com/assets/icons/coin-earn.png" alt="Oops!" />
         <p class="main-text">You don't have enough coins to join this contest.</p>
         <p class="sub-text">Watch reward ad to earn coins</p>
         <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;">
