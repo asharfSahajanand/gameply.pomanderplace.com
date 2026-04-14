@@ -234,7 +234,7 @@
                 </div>
                 <div class="game_section2">
                   <a
-                    href="https://pokiigame.com/game.html?name=dress-up-diva"
+                    href="/game.html?name=dress-up-diva"
                     class="game_section3"
                   >
                     <div class="game_section4">
@@ -272,7 +272,7 @@
                 </div>
                 <div class="game_section2">
                   <a
-                    href="https://pokiigame.com/game.html?name=goalkeeper"
+                    href="/game.html?name=goalkeeper"
                     class="game_section3"
                   >
                     <div class="game_section4">
@@ -310,7 +310,7 @@
                 </div>
                 <div class="game_section2">
                   <a
-                    href="https://pokiigame.com/game.html?name=love-couple-puzzle"
+                    href="/game.html?name=love-couple-puzzle"
                     class="game_section3"
                   >
                     <div class="game_section4">
@@ -402,206 +402,110 @@
 
     <script src="js/gamepage-loader.js"></script>
     <script src="error-fix4.js"></script>
+    <!-- Direct RewardAd on Earn Click -->
     <script>
-      let adLoading = false;
-      let adResetTimer = null;
-      let clickedGameUrl = null;
-
-      /* ---------------- SAFE LOCALSTORAGE HELPERS ---------------- */
-      function safeGetItem(key) {
-        try {
-          return localStorage.getItem(key);
-        } catch (e) {
-          console.warn("LocalStorage getItem blocked:", e);
-          return null;
-        }
-      }
-
-      function safeSetItem(key, value) {
-        try {
-          localStorage.setItem(key, value);
-        } catch (e) {
-          console.warn("LocalStorage setItem blocked:", e);
-        }
-      }
-
-      // Load coins on page load
-      document.addEventListener("DOMContentLoaded", function () {
-        const userCoins = parseInt(safeGetItem("coins")) || 0;
-        const coinEl = document.getElementById("coin");
-        if (coinEl) coinEl.textContent = userCoins;
-      });
-
-      // Ad initializer
-      function initializeAds(adSlot, callback) {
-        adLoading = true;
-        window.adsbygoogle = window.adsbygoogle || [];
-
-        adsbygoogle.push({
-          params: {
-            google_ad_loaded_callback: callback,
-            google_ad_slot: adSlot,
-            google_ad_format: "rewarded",
-          },
-        });
-      }
-
-      // Game section click: check coins
-      document.querySelectorAll(".game_section2").forEach((section) => {
-        section.addEventListener("click", function (e) {
-          e.preventDefault();
-
-          const userCoins = parseInt(safeGetItem("coins")) || 0;
-          const requiredCoins = 10;
-
-          const anchor = this.querySelector("a");
-          if (!anchor) {
-            return;
-          }
-          clickedGameUrl = anchor.href;
-
-          if (userCoins < requiredCoins) {
-            showOopsPopup();
-          } else {
-            // Deduct coins
-            const updatedCoins = userCoins - requiredCoins;
-            safeSetItem("coins", updatedCoins);
-
-            const coinEl = document.getElementById("coin");
-            if (coinEl) coinEl.textContent = updatedCoins;
-
-            // Redirect to the game
-            window.location.href = clickedGameUrl;
-          }
-        });
-      });
-
-      function showToast(message) {
-        const toast = document.getElementById("toast");
-        if (!toast) return;
-        toast.textContent = message;
-        toast.classList.add("show");
-
-        setTimeout(() => {
-          toast.classList.remove("show");
-        }, 3000); // Toast will disappear after 3s
+      // Coin helpers
+      function getCoins() {
+        return parseInt(localStorage.getItem('coins') || '0', 10);
       }
 
       function addCoins(amount) {
-        let coins = parseInt(safeGetItem("coins")) || 0;
-        coins += amount;
-        safeSetItem("coins", coins);
-
-        const coinEl = document.getElementById("coin");
-        if (coinEl) coinEl.textContent = coins;
+        const newTotal = getCoins() + amount;
+        localStorage.setItem('coins', newTotal);
+        document.getElementById('coin').textContent = newTotal;
       }
 
-      function resetAdState() {
-        adLoading = false;
-        if (adResetTimer) {
-          clearTimeout(adResetTimer);
-          adResetTimer = null;
+      // Toast
+      function showToast({ title, msg }) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-item';
+        toast.innerHTML = `
+          <svg style="flex-shrink:0;width:20px;height:20px;color:#fff" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7 12l5 5L21 7"/>
+          </svg>
+          <div>
+            <p style="font-weight:600;margin:0">${title}</p>
+            <p style="margin:0;opacity:0.85">${msg}</p>
+          </div>`;
+        document.getElementById('toast-container').appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
+
+      // Official RewardAd (user provided)
+      function RewardAd() {
+        if (typeof adBreak !== 'function') {
+          showToast({ title: 'No Ad', msg: 'Try later' });
+          return;
         }
-      }
 
-      // Oops popup controls
-      function showOopsPopup() {
-        const existingPopup = document.getElementById("oopsPopup");
-        if (existingPopup) existingPopup.remove();
+        adBreak({
+          type: 'reward',
+          name: 'reward_coin',
 
-        const popupHTML = `
-      <div id="oopsPopup" class="popup" style="display:flex" data-clarity-mask="true">
-        <div class="popup-data">
-          <img class="oops-img" src="/assets/icons/oops.png" alt="Oops!" />
-          <p class="main-text">You don't have enough coins to join this contest.</p>
-           <p class="sub-text">Just watch an ad & earn 10 coins</p>
-        <div class="watch-btn-wrapper">
-          <button id="watchAdBtn" class="watch-btn shimmer-btn">Claim</button>
-          <span class="ad-tag">Ad</span>
-        </div>
-          <button id="skipBtn" class="skip-btn">Skip</button>
-        </div>
-      </div>
-    `;
+          beforeReward: function(showAdFn) {
+            showAdFn();
+          },
 
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = popupHTML;
-        document.body.appendChild(wrapper.firstElementChild);
+          adViewed: function() {
+            console.log('Ad viewed');
+          },
 
-        console.log("Popup opened:"); // Debug log for Clarity
+          adDismissed: function() {
+            showToast({ title: 'Dismissed', msg: '🚫 No reward given' });
+          },
 
-        const watchBtn = document.getElementById("watchAdBtn");
-        const skipBtn = document.getElementById("skipBtn");
-        const originalText = watchBtn.innerHTML;
+          adBreakDone: function(placementInfo) {
+            console.log('breakStatus:', placementInfo.breakStatus);
 
-        // 👉 Skip button handler
-        skipBtn.addEventListener("click", function () {
-          if (clickedGameUrl) {
-            window.location.href = clickedGameUrl;
-          }
-          closeOopsPopup();
-        });
-
-        // 👉 Watch Ad button handler
-        watchBtn.addEventListener("click", function () {
-          watchBtn.innerHTML = "Loading Ad... ⏳";
-          watchBtn.disabled = true;
-          skipBtn.disabled = true; // Disable skip while ad is loading
-
-          let adTimeout = setTimeout(() => {
-            watchBtn.innerHTML = originalText;
-            watchBtn.disabled = false;
-            skipBtn.disabled = false;
-
-            if (clickedGameUrl) {
-              window.location.href = clickedGameUrl;
-            }
-
-            closeOopsPopup();
-          }, 7000);
-
-          adLoading = true;
-
-          initializeAds(9389057744, (rewardedAd) => {
-            if (rewardedAd) {
-              clearTimeout(adTimeout);
-
-              rewardedAd.show((result) => {
-                if (result && result.status === "viewed") {
-                  if (clickedGameUrl) {
-                    setTimeout(() => {
-                      window.location.href = clickedGameUrl;
-                    }, 100);
-                  }
-                } else {
-                  if (clickedGameUrl) {
-                    setTimeout(() => {
-                      window.location.href = clickedGameUrl;
-                    }, 100);
-                  }
-                }
-                closeOopsPopup();
-                watchBtn.innerHTML = originalText;
-                watchBtn.disabled = false;
-                skipBtn.disabled = false;
-                resetAdState();
-              });
+            if (placementInfo.breakStatus === 'viewed') {
+              addCoins(100);
+showToast({ title: 'Congratulations!', msg: '🥳 +100 coins added!' });
+             if(typeof window.onAdSuccess === 'function') window.onAdSuccess();
             } else {
-              clearTimeout(adTimeout);
-              watchBtn.innerHTML = originalText;
-              watchBtn.disabled = false;
-              skipBtn.disabled = false;
-              resetAdState();
+              showToast({ title: 'No Ad Available', msg: 'Try again later' });
             }
-          });
+          }
         });
       }
 
-      function closeOopsPopup() {
-        const popup = document.getElementById("oopsPopup");
-        if (popup) popup.remove();
-      }
+      // Direct on Earn button
+      document.addEventListener('DOMContentLoaded', function() {
+        const earnBtn = document.getElementById('earnCoinBtn');
+        if (earnBtn) earnBtn.onclick = RewardAd;
+        document.getElementById('coin').textContent = getCoins();
+      });
     </script>
+
+    <!-- Prevent interstitial - AdSense overlay blocker -->
+    <script>
+      // Block unwanted overlays/interstitials
+      setTimeout(() => {
+        const overlays = document.querySelectorAll('[data-overlays]');
+        overlays.forEach(el => el.removeAttribute('data-overlays'));
+        
+        // Hide interstitial modals
+        const interstitials = document.querySelectorAll('.adsbygoogle[data-ad-status="filled"]');
+        interstitials.forEach(el => {
+          if (el.style.display === 'block' && el.offsetHeight > window.innerHeight * 0.8) {
+            el.style.display = 'none';
+          }
+        });
+      }, 1000);
+
+      // CSS override for AdSense interstitial
+      const style = document.createElement('style');
+      style.textContent = `
+        ins.adsbygoogle[data-ad-status="filled"] {
+          z-index: 999 !important;
+        }
+        .google-auto-placed {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+    </script>
+
+    <script src="js/redeemcoin.js" crossorigin="anonymous"></script>
   </body>
 
 <!-- Mirrored from 1028.play.pokiigame.com/casual-game.html by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 07 Apr 2026 06:00:44 GMT -->
