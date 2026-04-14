@@ -211,7 +211,6 @@ function showOopsPopup() {
     // Direct success: no ad
     setTimeout(() => {
       addCoins(100);
-      showRewardModal();
       closeOopsPopup();
     }, 800); // Brief delay for UX
   });
